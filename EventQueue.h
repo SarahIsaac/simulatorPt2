@@ -50,6 +50,7 @@ public:
 		context_switch = cost;
 		total_cpu_time = 0;
 		total_processes = 100;
+		int interrupt_time = 10;
 
 		if (ready_set_type == "fifo")
 		{
@@ -59,10 +60,10 @@ public:
 		{
 			ready_set = new SJFReadySet(cpu_count, context_switch);
 		}
-		//else if (ready_set_type == "rr")
-//		{
-	//		ready_set = new RoundRobinReadySet(cpu_count, context_switch, interrupt_time);
-		//}
+		else if (ready_set_type == "rr")
+		{
+			ready_set = new RoundRobinReadySet(cpu_count, context_switch, interrupt_time);
+		}
 		else if (ready_set_type == "asjf")
 		{
 			ready_set = new ASJFReadySet(cpu_count, context_switch, 10);
@@ -98,7 +99,9 @@ public:
 					io_bound_counter = io_task_count;
 				}
 			}
-			CreateEvent e(time, task_type, io_devices_count);
+			bool interruption = false;
+			if (ready_set_type == "rr") interruption = true;
+			CreateEvent e(time, task_type, io_devices_count, interruption);
 			event_queue.push(e);
 		}
 

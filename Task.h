@@ -48,9 +48,10 @@ public:
 	bool reached_io;
 	int response_time;
 	int current_approximate;
+	int can_interrupt;
 
 	Task() {}
-	Task(std::string task_type, int s_time, int io_devices)		//io_devices is the max number of io_devices to choose from
+	Task(std::string task_type, int s_time, int io_devices, bool interrupt)		//io_devices is the max number of io_devices to choose from
 	{
 		start_time = s_time;
 		current_burst = 0;
@@ -58,6 +59,7 @@ public:
 		start_time = s_time;
 		current_burst = 0;
 		current_approximate = 20;
+		can_interrupt = interrupt;
 
 		std::random_device rd;
 		std::mt19937 mt(rd());
@@ -101,7 +103,16 @@ public:
 
 	void done_job()
 	{
+		if (can_interrupt)
+		{
+			current_burst++;
+		}
 		current_burst++;
+	}
+
+	void setCurrentDuration(int i)
+	{
+		bursts[current_burst].duration = i;
 	}
 
 	void calculateApproximate()

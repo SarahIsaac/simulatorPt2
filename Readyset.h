@@ -173,3 +173,53 @@ public:
 	}
 };
 
+class RoundRobinReadySet : public BaseReadySet
+{
+private:
+	std::queue<Task> task_queue;
+	int interrupt_time;
+
+public:
+	RoundRobinReadySet() :BaseReadySet() {}
+	RoundRobinReadySet(int cpu, int c_switch, int i_time) : BaseReadySet(cpu, c_switch)
+	{
+		interrupt_time = i_time;
+	};
+
+	CPUEvent scheduleNext(Task &t, int current_time)
+	{
+		int time;
+		if (t.get_job().duration > interrupt_time)
+		{
+			int current_duration = t.get_job().duration;
+			time = current_duration - interrupt_time;
+			t.setCurrentDuration(time);
+			time = interrupt_time;
+		}
+		else
+		{
+			time = t.get_job().duration;
+			t.setCurrentDuration(0);
+		}
+		int exec_time = time + current_time + context_switch;
+		CPUEvent e(exec_time, t);
+		return e;
+	}
+
+	void pushToWait(Task &t) { task_queue.push(t); }
+
+	Task remove()
+	{
+		Task t = task_queue.front();
+		task_queue.pop();
+		return t;
+	}
+
+	bool isEmpty()
+	{
+		if (task_queue.empty()) return true;
+		else return false;
+	}
+};
+
+

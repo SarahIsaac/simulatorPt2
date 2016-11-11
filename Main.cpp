@@ -21,5 +21,8 @@ int main()
 	std::cout << std::endl;
 	event_q2.start_simulator();
 
+	EventQueue event_q3(2, .6, 5, 2, 1, "rr");
+	std::cout << std::endl;
+	event_q3.start_simulator();
 	return 0;
 }

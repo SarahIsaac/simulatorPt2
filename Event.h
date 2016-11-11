@@ -24,9 +24,9 @@ public:
 
 struct CreateEvent : Event
 {
-	CreateEvent(int execute_time, std:: string t_type, int io_num) : Event(execute_time, "create")
+	CreateEvent(int execute_time, std:: string t_type, int io_num, bool can_interrupt) : Event(execute_time, "create")
 	{
-		Task t(t_type, execute_time, io_num);
+		Task t(t_type, execute_time, io_num, can_interrupt);
 		task = t;
 	}
 };
