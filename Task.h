@@ -2,7 +2,6 @@
 #include <queue>
 #include <string>
 #include <random>
-#include <time.h>
 #include <stdlib.h>
 
 struct Burst
@@ -49,26 +48,25 @@ public:
 	int response_time;
 	int current_approximate;
 	int can_interrupt;
+	int total_cpu_time;
 
 	Task() {}
 	Task(std::string task_type, int s_time, int io_devices, bool interrupt)		//io_devices is the max number of io_devices to choose from
 	{
 		start_time = s_time;
 		current_burst = 0;
-		srand(time(NULL));
-		start_time = s_time;
-		current_burst = 0;
 		current_approximate = 20;
 		can_interrupt = interrupt;
+		total_cpu_time = 0;
 
 		std::random_device rd;
 		std::mt19937 mt(rd());
 		std::uniform_int_distribution<int> low_dist(5, 20);
 		std::uniform_int_distribution<int> high_dist(40, 80);
 		std::uniform_int_distribution<int> job_dist(15, 30);
+		std::uniform_int_distribution<int> io_dist(0, io_devices - 1);
 
-		int job_count = 3;
-		//int job_count = job_dist(mt);
+		int job_count = job_dist(mt);
 		for (int i = 0; i < job_count; i++)
 		{
 			int t;
@@ -79,13 +77,14 @@ public:
 				else t = low_dist(mt);
 				CPUBurst job("cpu", t);
 				bursts.push_back(job);
+				total_cpu_time += t;
 			}
 			else
 			{
 				// io task
 				if (task_type == "io") t = high_dist(mt);
 				else t = low_dist(mt);
-				int device_index = rand() % 2;
+				int device_index = io_dist(mt);
 				IOBurst job("io", t, device_index);
 				bursts.push_back(job);
 			}
@@ -105,9 +104,13 @@ public:
 	{
 		if (can_interrupt)
 		{
+			if (bursts[current_burst].duration <= 0)
+				current_burst++;
+		}
+		else
+		{
 			current_burst++;
 		}
-		current_burst++;
 	}
 
 	void setCurrentDuration(int i)

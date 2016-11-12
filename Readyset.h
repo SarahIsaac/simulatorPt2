@@ -29,7 +29,8 @@ public:
 
 	virtual CPUEvent scheduleNext(Task &t, int current_time)
 	{
-		CPUEvent e;
+		int exec_time = t.get_job().duration + current_time + context_switch;
+		CPUEvent e(exec_time, t);
 		return e;
 	};
 
@@ -51,13 +52,6 @@ private:
 public:
 	FIFOReadySet() :BaseReadySet() {}
 	FIFOReadySet(int cpu, int c_switch) : BaseReadySet(cpu, c_switch) {};
-
-	CPUEvent scheduleNext(Task &t, int current_time)
-	{
-		int exec_time = t.get_job().duration + current_time + context_switch;
-		CPUEvent e(exec_time, t);
-		return e;
-	}
 
 	void pushToWait(Task &t)
 	{
@@ -95,12 +89,6 @@ private:
 public:
 	SJFReadySet() :BaseReadySet() {}
 	SJFReadySet(int cpu, int c_switch) : BaseReadySet(cpu, c_switch) {};
-	CPUEvent scheduleNext(Task &t, int current_time)
-	{
-		int exec_time = t.get_job().duration + current_time + context_switch;
-		CPUEvent e(exec_time, t);
-		return e;
-	}
 
 	void pushToWait(Task &t) { task_queue.push(t); }
 
@@ -138,13 +126,6 @@ public:
 	{
 		standard_start_approx = standard_start;
 	};
-
-	CPUEvent scheduleNext(Task &t, int current_time)
-	{
-		int exec_time = t.get_job().duration + current_time + context_switch;
-		CPUEvent e(exec_time, t);
-		return e;
-	}
 
 	void pushToWait(Task &t)
 	{
@@ -217,7 +198,8 @@ public:
 
 	bool isEmpty()
 	{
-		if (task_queue.empty()) return true;
+		if (task_queue.empty()) 
+			return true;
 		else return false;
 	}
 };

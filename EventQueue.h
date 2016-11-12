@@ -27,12 +27,11 @@ public:
 	int io_devices_count;
 	int context_switch;
 	int total_cpu_time;
-	Event current_event;
-	std::vector<Task> finished_tasks;
 	int total_processes;
+	Event current_event;
 
+	std::vector<Task> finished_tasks;
 	std::priority_queue<Event, std::vector<Event>, CompareEvent> event_queue;
-
 	BaseReadySet *ready_set;
 	std::vector<Device> io_devices;
 
@@ -127,66 +126,44 @@ public:
 			{
 				if (current_event.task.get_job().type == "cpu")
 				{
-					//indicate to readyset that a task has finished and left
 					ready_set->done();
-					//total_cpu_time += current_event.task.get_job().duration;
 					current_event.task.done_job();
 
-					//fill up CPUs with whatever is in the wait_set
 					while (!ready_set->isEmpty() && ready_set->idle_cpu_count > 0)
 					{
 						Task task_to_schedule = ready_set->remove();
 						if (!task_to_schedule.is_done(current_time))
-						{
 							scheduleTask(task_to_schedule);
-						}
 						else
-						{
 							finished_tasks.push_back(task_to_schedule);
-						}
 					}
 
 					if (!current_event.task.is_done(current_time))
-					{
-						//if the task that just finished isn't done, reschedule it
 						scheduleTask(current_event.task);
-					}
 					else
-					{
 						finished_tasks.push_back(current_event.task);
-					}
 				}
 				else if (current_event.task.get_job().type == "io")
 				{
-					//indicate to readyset that a task has finished and left
 					int id = current_event.task.get_job().io_id;
 					io_devices[id].done();
+					current_event.task.setCurrentDuration(0);
 					current_event.task.done_job();
 					current_event.task.set_response_time(current_time);
 
-					//fill up IO with whatever is in the wait_set
 					while (!io_devices[id].wait_set.empty() && io_devices[id].idle)
 					{
 						Task task_to_schedule = io_devices[id].remove();
 						if (!task_to_schedule.is_done(current_time))
-						{
 							scheduleTask(task_to_schedule);
-						}
 						else
-						{
 							finished_tasks.push_back(task_to_schedule);
-						}
 					}
 
 					if (!current_event.task.is_done(current_time))
-					{
-						// task isn't finished yet, reschedule for the next job
 						scheduleTask(current_event.task);
-					}
 					else
-					{
 						finished_tasks.push_back(current_event.task);
-					}
 				}
 			}
 		}
@@ -202,14 +179,11 @@ public:
 		if (task.get_job().type == "cpu")
 		{
 			if (!ready_set->ableToAdd())
-			{
 				ready_set->pushToWait(task);
-			}
 			else
 			{
 				ready_set->add();
 				CPUEvent e = ready_set->scheduleNext(task, current_time);
-				total_cpu_time += task.get_job().duration;
 				event_queue.push(e);
 			}
 		}
@@ -217,9 +191,7 @@ public:
 		{
 			int id = task.get_job().io_id;
 			if (!io_devices[id].ableToAdd())
-			{
 				io_devices[id].push(task);
-			}
 			else
 			{
 				io_devices[id].add();
@@ -248,6 +220,15 @@ public:
 		std::cout << "Average Response Time: " << (double)total / (double)size << std::endl;
 	}
 
+	void getTotalCPUTime()
+	{
+		total_cpu_time = 0;
+		for (int i = 0; i < finished_tasks.size() - 1; i++)
+		{
+			total_cpu_time += finished_tasks[i].total_cpu_time;
+		}
+	}
+
 	void calculateAverageLatency()
 	{
 		int total = 0;
@@ -262,11 +243,13 @@ public:
 
 	void calculateThroughput()
 	{
+		getTotalCPUTime();
 		std::cout << "Throughput: " << (double)total_processes / (double)total_cpu_time << std::endl;
 	}
 
 	void calculateEfficiency()
 	{
+		getTotalCPUTime();
 		std::cout << "Efficiency: " << (double)total_cpu_time / (double)current_time << std::endl;
 	}
 };
